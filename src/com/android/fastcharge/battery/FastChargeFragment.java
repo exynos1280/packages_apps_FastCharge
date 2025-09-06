@@ -69,12 +69,20 @@ public class FastChargeFragment extends PreferenceFragmentCompat implements
         if (FileUtils.fileExists(mConfig.getFastChargePath())) {
             mFastChargePreference.setEnabled(true);
             mFastChargePreference.setOnPreferenceChangeListener(this);
+
+            // Get saved preference state, default to true if not set
+            SharedPreferences sharedPrefs = PreferenceManager.getDefaultSharedPreferences(getContext());
+            boolean savedState = sharedPrefs.getBoolean(FastChargeConfig.FASTCHARGE_KEY, true);
+
+            // Set UI and apply saved state to sysfs
+            mFastChargePreference.setChecked(savedState);
+            boolean sysfsValue = mConfig.isLogicInverted() ? !savedState : savedState;
+            // Convert the UI value to the actual sysfs value based on inversion setting
+            FileUtils.writeLine(mConfig.getFastChargePath(), sysfsValue ? "1":"0");
         } else {
             mFastChargePreference.setSummary(R.string.fast_charging_summary_not_supported);
             mFastChargePreference.setEnabled(false);
         }
-
-        mFastChargePreference.setChecked(mConfig.isCurrentlyEnabled(mConfig.getFastChargePath()));
 
         // Registering observers
         IntentFilter filter = new IntentFilter();
@@ -85,7 +93,9 @@ public class FastChargeFragment extends PreferenceFragmentCompat implements
     @Override
     public void onResume() {
         super.onResume();
-        mFastChargePreference.setChecked(mConfig.isCurrentlyEnabled(mConfig.getFastChargePath()));
+        SharedPreferences sharedPrefs = PreferenceManager.getDefaultSharedPreferences(getContext());
+        boolean savedState = sharedPrefs.getBoolean(FastChargeConfig.FASTCHARGE_KEY, true);
+        mFastChargePreference.setChecked(savedState);
     }
 
 
@@ -97,20 +107,19 @@ public class FastChargeFragment extends PreferenceFragmentCompat implements
 
             SharedPreferences sharedPrefs = PreferenceManager.getDefaultSharedPreferences(mContext);
 
-            // Convert the UI value to the actual sysfs value based on inversion setting
+            // Save user preference first
             boolean uiValue = (Boolean) newValue;
+            sharedPrefs.edit().putBoolean(FastChargeConfig.FASTCHARGE_KEY, uiValue).commit();
+
+            // Then apply to sysfs
             boolean sysfsValue = mConfig.isLogicInverted() ? !uiValue : uiValue;
+            // Convert the UI value to the actual sysfs value based on inversion setting
             FileUtils.writeLine(mConfig.getFastChargePath(), sysfsValue ? "1":"0");
 
-            boolean enabled = mConfig.isCurrentlyEnabled(mConfig.getFastChargePath());
-
-            sharedPrefs.edit().putBoolean(mConfig.FASTCHARGE_KEY, enabled).commit();
-
-            Intent intent = new Intent(mConfig.ACTION_FAST_CHARGE_SERVICE_CHANGED);
-
-            intent.putExtra(mConfig.EXTRA_FAST_CHARGE_STATE, enabled);
+            Intent intent = new Intent(FastChargeConfig.ACTION_FAST_CHARGE_SERVICE_CHANGED);
+            intent.putExtra(FastChargeConfig.EXTRA_FAST_CHARGE_STATE, uiValue);
             intent.setFlags(Intent.FLAG_RECEIVER_REGISTERED_ONLY);
-            mContext.sendBroadcastAsUser(intent, UserHandle.CURRENT);;
+            mContext.sendBroadcastAsUser(intent, UserHandle.CURRENT);
         }
         return true;
     }
