@@ -53,6 +53,6 @@ public class FastChargeConfig {
     }
 
     public boolean isCurrentlyEnabled(String node) {
-        return FileUtils.getNodeValueAsBoolean(node, false);
+        return FileUtils.getNodeValueAsBoolean(node, true);
     }
  }

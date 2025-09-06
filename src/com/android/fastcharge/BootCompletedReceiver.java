@@ -40,7 +40,7 @@ public class BootCompletedReceiver extends BroadcastReceiver {
 
         SharedPreferences sharedPrefs = PreferenceManager.getDefaultSharedPreferences(context);
 
-        boolean fastchargeEnabled = sharedPrefs.getBoolean(mConfig.FASTCHARGE_KEY, false);
+        boolean fastchargeEnabled = sharedPrefs.getBoolean(mConfig.FASTCHARGE_KEY, true);
         FileUtils.writeLine(mConfig.getFastChargePath(), fastchargeEnabled ? "1" : "0");
 
     }
