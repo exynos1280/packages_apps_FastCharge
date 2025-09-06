@@ -19,6 +19,7 @@ package com.android.fastcharge.battery;
 import android.content.Context;
 import android.content.res.Resources;
 
+import com.android.fastcharge.R;
 import com.android.fastcharge.utils.FileUtils;
 
 public class FastChargeConfig {
@@ -37,15 +38,15 @@ public class FastChargeConfig {
     public static final String FASTCHARGE_KEY = "fast_charging";
 
     private final String config_FastChargePath;
+    private final boolean config_FastChargeInverted;
 
     public static final String ACTION_FAST_CHARGE_SERVICE_CHANGED = "com.android.fastcharge.battery.FAST_CHARGE_SERVICE_CHANGED";
     public static final String EXTRA_FAST_CHARGE_STATE = "fastchargingenabled";
 
     private FastChargeConfig(Context context) {
-
-	Resources res = context.getResources();
-
-	config_FastChargePath = res.getString(com.android.fastcharge.R.string.config_FastChargePath);
+        Resources res = context.getResources();
+        config_FastChargePath = res.getString(com.android.fastcharge.R.string.config_FastChargePath);
+        config_FastChargeInverted = res.getBoolean(com.android.fastcharge.R.bool.config_FastChargeInverted);
     }
 
     public String getFastChargePath() {
@@ -53,6 +54,11 @@ public class FastChargeConfig {
     }
 
     public boolean isCurrentlyEnabled(String node) {
-        return FileUtils.getNodeValueAsBoolean(node, true);
+        boolean rawValue = FileUtils.getNodeValueAsBoolean(node, true);
+        return config_FastChargeInverted ? !rawValue : rawValue;
+    }
+
+    public boolean isLogicInverted() {
+        return config_FastChargeInverted;
     }
  }

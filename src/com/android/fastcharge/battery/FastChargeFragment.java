@@ -44,7 +44,7 @@ public class FastChargeFragment extends PreferenceFragmentCompat implements
         @Override
         public void onReceive(Context context, Intent intent) {
             String action = intent.getAction();
-            if (action.equals(mConfig.ACTION_FAST_CHARGE_SERVICE_CHANGED)) {
+            if (action.equals(FastChargeConfig.ACTION_FAST_CHARGE_SERVICE_CHANGED)) {
                 if (mInternalFastChargeStart) {
                         mInternalFastChargeStart = false;
                         return;
@@ -53,7 +53,7 @@ public class FastChargeFragment extends PreferenceFragmentCompat implements
                 if (mFastChargePreference == null) return;
 
                 final boolean fastchargeStarted = intent.getBooleanExtra(
-                            mConfig.EXTRA_FAST_CHARGE_STATE, false);
+                            FastChargeConfig.EXTRA_FAST_CHARGE_STATE, false);
 
                 mFastChargePreference.setChecked(fastchargeStarted);
 
@@ -65,7 +65,7 @@ public class FastChargeFragment extends PreferenceFragmentCompat implements
     public void onCreatePreferences(Bundle savedInstanceState, String rootKey) {
         setPreferencesFromResource(R.xml.fastcharge_settings, rootKey);
         mConfig = FastChargeConfig.getInstance(getContext());
-        mFastChargePreference = (SwitchPreferenceCompat) findPreference(mConfig.FASTCHARGE_KEY);
+        mFastChargePreference = (SwitchPreferenceCompat) findPreference(FastChargeConfig.FASTCHARGE_KEY);
         if (FileUtils.fileExists(mConfig.getFastChargePath())) {
             mFastChargePreference.setEnabled(true);
             mFastChargePreference.setOnPreferenceChangeListener(this);
@@ -97,7 +97,10 @@ public class FastChargeFragment extends PreferenceFragmentCompat implements
 
             SharedPreferences sharedPrefs = PreferenceManager.getDefaultSharedPreferences(mContext);
 
-            FileUtils.writeLine(mConfig.getFastChargePath(), (Boolean) newValue ? "1":"0");
+            // Convert the UI value to the actual sysfs value based on inversion setting
+            boolean uiValue = (Boolean) newValue;
+            boolean sysfsValue = mConfig.isLogicInverted() ? !uiValue : uiValue;
+            FileUtils.writeLine(mConfig.getFastChargePath(), sysfsValue ? "1":"0");
 
             boolean enabled = mConfig.isCurrentlyEnabled(mConfig.getFastChargePath());
 

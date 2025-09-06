@@ -16,4 +16,7 @@
 
     <!-- Path to Fast Charging sysfs node -->
     <string name="config_FastChargePath" translatable="false"></string>
+
+    <!-- Whether the FastCharge sysfs node is inverted (1 = disabled, 0 = enabled) -->
+    <bool name="config_FastChargeInverted">false</bool>
 </resources>
